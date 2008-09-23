@@ -23,8 +23,8 @@ public class ServletFaultIsolator {
         return fi;
     }
 
-    public static SyncAsyncFaultIsolator createSyncFaultIsolator(long timeout, FeatureFaultIsolator ... featureList) {
-        return new SyncAsyncFaultIsolator(executor, timeout, featureList);
+    public static SyncAsyncFaultIsolator createSyncAsyncFaultIsolator(long timeout) {
+        return new SyncAsyncFaultIsolator(executor, timeout);
     }
 
     public static boolean featureIsAvailable(FeatureFaultIsolator feature, HttpServletRequest httpServletRequest) {

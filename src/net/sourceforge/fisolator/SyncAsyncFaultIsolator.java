@@ -12,20 +12,10 @@ import java.util.Arrays;
 public class SyncAsyncFaultIsolator {
     private ExecutorService executor;
     private long timeout;
-    private FeatureFaultIsolator[] featureList;
 
     public SyncAsyncFaultIsolator(ExecutorService executor, long timeout) {
         this.executor = executor;
         this.timeout = timeout;
-    }
-
-    public SyncAsyncFaultIsolator(ExecutorService executor, long timeout, FeatureFaultIsolator... featureList) {
-        this(executor,timeout);
-        this.featureList = featureList;
-    }
-
-    public <T> T invoke(final Callable<T> callable) throws ExecutionException, InterruptedException, ServiceFaultException {
-        return invoke(callable, featureList);
     }
 
     public <T> T invoke(final Callable<T> callable, final FeatureFaultIsolator... featureList) throws ExecutionException, InterruptedException, ServiceFaultException {

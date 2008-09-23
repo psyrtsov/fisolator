@@ -11,12 +11,23 @@ import java.util.Arrays;
  */
 public class SyncFaultIsolator {
 
-    public <T> T invoke(final Callable<T> callable, FeatureFaultIsolator... featureList) throws Exception, ServiceFaultException {
+    public static <T> T invoke(final Callable<T> callable, FeatureFaultIsolator... featureList) throws Exception {
         if (!FaultIsolatorHelper.taskStart(featureList)) {
             throw new ServiceFaultException("Features " + Arrays.toString(featureList) + " are disabled");
         }
         try {
             return callable.call();
+        } finally {
+            FaultIsolatorHelper.taskStopped(featureList);
+        }
+    }
+
+    public static void invoke(final Runnable runnable, FeatureFaultIsolator... featureList) throws ServiceFaultException {
+        if (!FaultIsolatorHelper.taskStart(featureList)) {
+            throw new ServiceFaultException("Features " + Arrays.toString(featureList) + " are disabled");
+        }
+        try {
+            runnable.run();
         } finally {
             FaultIsolatorHelper.taskStopped(featureList);
         }
