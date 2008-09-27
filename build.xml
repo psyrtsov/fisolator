@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Fault Isolator Framework" default="dist" basedir=".">
-    <property name="version" value="0.3"/>
+    <property name="version" value="0.4"/>
     <property name="name" value="fisolator${version}"/>
     <property name="lib.dir" value="lib"/>
     <property name="src.dir" value="src"/>
@@ -93,7 +93,7 @@
         <delete dir="${build.dir}"/>
         <delete dir="${dist.dir}"/>
     </target>
-    <target name="compile">
+    <target name="compile" depends="clean">
         <mkdir dir="${build.dir}"/>
         <mkdir dir="${build.classes}"/>
         <mkdir dir="${build.lib}"/>

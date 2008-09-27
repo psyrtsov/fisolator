@@ -12,7 +12,16 @@ import java.util.concurrent.*;
  */
 public class ServletFaultIsolator {
     private static final ExecutorService DEFAULT_EXECUTOR = Executors.newCachedThreadPool();
+
     private static ExecutorService executor = DEFAULT_EXECUTOR;
+
+    public static ExecutorService getExecutor() {
+        return executor;
+    }
+
+    public static void setExecutor(ExecutorService executor) {
+        ServletFaultIsolator.executor = executor;
+    }
 
     public static AsyncFaultIsolator getAsyncFaultIsolator(HttpServletRequest httpServletRequest) {
         AsyncFaultIsolator fi = (AsyncFaultIsolator) httpServletRequest.getAttribute(AsyncFaultIsolator.class.getName());
