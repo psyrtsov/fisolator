@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package net.sourceforge.fisolator;
+package net.sf.fisolator;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * User: Pavel Syrtsov
  * Date: Aug 30, 2008
  * Time: 12:05:32 AM
- * psdo: provide comments for class ${CLASSNAME}
+ * todo: provide comments
  */
 public class FeatureFaultIsolatorImpl implements FeatureFaultIsolator {
     AtomicInteger threadCounter = new AtomicInteger(0);

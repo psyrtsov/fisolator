@@ -14,20 +14,27 @@
  * under the License.
  */
 
-package net.sourceforge.fisolator;
+package net.sf.fisolator;
 
 /**
- * todo: provide comments for class ${CLASSNAME}
  * User: Pavel Syrtsov
- * Date: Aug 31, 2008
- * Time: 9:58:31 AM
+ * Date: Sep 1, 2008
+ * Time: 4:12:14 PM
+ * todo: provide comments
  */
-public interface FeatureFaultIsolator {
-    void taskStarted();
+public class ServiceFaultException extends Exception {
+    public ServiceFaultException() {
+    }
 
-    void taskStopped();
+    public ServiceFaultException(String message) {
+        super(message);
+    }
 
-    void taskTimedOut();
+    public ServiceFaultException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    boolean isAvailable();
+    public ServiceFaultException(Throwable cause) {
+        super(cause);
+    }
 }

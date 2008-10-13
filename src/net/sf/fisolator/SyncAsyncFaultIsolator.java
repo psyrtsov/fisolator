@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package net.sourceforge.fisolator;
+package net.sf.fisolator;
 
 import java.util.concurrent.*;
 import java.util.Arrays;
@@ -23,7 +23,7 @@ import java.util.Arrays;
  * User: Pavel Syrtsov
  * Date: Sep 1, 2008
  * Time: 7:05:44 PM
- * psdo: provide comments for class ${CLASSNAME}
+ * todo: provide comments
  */
 public class SyncAsyncFaultIsolator {
     private ExecutorService executor;

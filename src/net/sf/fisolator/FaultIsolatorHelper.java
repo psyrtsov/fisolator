@@ -14,13 +14,13 @@
  * under the License.
  */
 
-package net.sourceforge.fisolator;
+package net.sf.fisolator;
 
 /**
  * User: Pavel Syrtsov
  * Date: Aug 23, 2008
  * Time: 11:14:22 PM
- * psdo: provide comments for class ${CLASSNAME}
+ * todo: provide comments
  */
 public class FaultIsolatorHelper {
 

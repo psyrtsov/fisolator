@@ -24,6 +24,7 @@
     <path id="compile-libs">
         <fileset dir="${testlib.dir}">
             <include name="servlet-api.jar"/>
+            <include name="jsp-api.jar"/>   
         </fileset>
         <path refid="runtime-libs"/>
     </path>
@@ -52,6 +53,7 @@
             <manifest>
                 <attribute name="Jar-Version" value="${version}"/>
             </manifest>
+            <metainf dir="./etc" includes="tld/**"/>
         </jar>
     </target>
     <target name="test" depends="compile,compile-test">

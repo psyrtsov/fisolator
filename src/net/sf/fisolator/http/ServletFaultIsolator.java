@@ -14,14 +14,16 @@
  * under the License.
  */
 
-package net.sourceforge.fisolator;
+package net.sf.fisolator.http;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.concurrent.atomic.AtomicInteger;
+import net.sf.fisolator.AsyncFaultIsolator;
+import net.sf.fisolator.SyncAsyncFaultIsolator;
+
+import javax.servlet.ServletRequest;
 import java.util.concurrent.*;
 
 /**
- * psdo: provide comments for class ${CLASSNAME}
+ * todo: provide comments
  * User: Pavel Syrtsov
  * Date: Sep 1, 2008
  * Time: 10:01:07 AM
@@ -39,24 +41,25 @@ public class ServletFaultIsolator {
         ServletFaultIsolator.executor = executor;
     }
 
-    public static AsyncFaultIsolator getAsyncFaultIsolator(HttpServletRequest httpServletRequest) {
-        AsyncFaultIsolator fi = (AsyncFaultIsolator) httpServletRequest.getAttribute(AsyncFaultIsolator.class.getName());
+    /**
+     * create AsyncFaultIsolator, one per request
+     * @param servletRequest - AsyncFaultIsolator is stored in this request
+     * @return created instance
+     */
+    public static AsyncFaultIsolator getAsyncFaultIsolator(ServletRequest servletRequest) {
+        AsyncFaultIsolator fi = getAsyncFaultIsolatorIfExists(servletRequest);
         if (fi == null) {
             fi = new AsyncFaultIsolator(executor);
-            httpServletRequest.setAttribute(AsyncFaultIsolator.class.getName(), fi);
+            servletRequest.setAttribute(AsyncFaultIsolator.class.getName(), fi);
         }
         return fi;
+    }
+
+    public static AsyncFaultIsolator getAsyncFaultIsolatorIfExists(ServletRequest servletRequest) {
+        return (AsyncFaultIsolator) servletRequest.getAttribute(AsyncFaultIsolator.class.getName());
     }
 
     public static SyncAsyncFaultIsolator createSyncAsyncFaultIsolator(long timeout) {
         return new SyncAsyncFaultIsolator(executor, timeout);
     }
-
-    public static boolean featureIsAvailable(FeatureFaultIsolator feature, HttpServletRequest httpServletRequest) {
-        AsyncFaultIsolator fi = (AsyncFaultIsolator) httpServletRequest.getAttribute(AsyncFaultIsolator.class.getName());
-        AtomicInteger featurePerActionCounter = fi.getCounter(feature);
-        return featurePerActionCounter.get() <= 0;
-    }
-
-
 }

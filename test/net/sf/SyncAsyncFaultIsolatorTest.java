@@ -14,11 +14,16 @@
  * under the License.
  */
 
-package net.sourceforge.fisolator;
+package net.sf;
 
 import junit.framework.TestCase;
 
 import java.util.concurrent.*;
+
+import net.sf.fisolator.FeatureFaultIsolator;
+import net.sf.fisolator.FeatureFaultIsolatorImpl;
+import net.sf.fisolator.ServiceFaultException;
+import net.sf.fisolator.SyncAsyncFaultIsolator;
 
 /**
  * User: Pavel Syrtsov
