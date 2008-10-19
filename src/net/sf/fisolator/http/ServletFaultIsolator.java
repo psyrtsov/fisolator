@@ -16,8 +16,7 @@
 
 package net.sf.fisolator.http;
 
-import net.sf.fisolator.AsyncFaultIsolator;
-import net.sf.fisolator.SyncAsyncFaultIsolator;
+import net.sf.fisolator.FaultIsolator;
 
 import javax.servlet.ServletRequest;
 import java.util.concurrent.*;
@@ -46,20 +45,16 @@ public class ServletFaultIsolator {
      * @param servletRequest - AsyncFaultIsolator is stored in this request
      * @return created instance
      */
-    public static AsyncFaultIsolator getAsyncFaultIsolator(ServletRequest servletRequest) {
-        AsyncFaultIsolator fi = getAsyncFaultIsolatorIfExists(servletRequest);
+    public static FaultIsolator createFaultIsolator(ServletRequest servletRequest) {
+        FaultIsolator fi = getFaultIsolatorIfExists(servletRequest);
         if (fi == null) {
-            fi = new AsyncFaultIsolator(executor);
-            servletRequest.setAttribute(AsyncFaultIsolator.class.getName(), fi);
+            fi = new FaultIsolator(executor);
+            servletRequest.setAttribute(FaultIsolator.class.getName(), fi);
         }
         return fi;
     }
 
-    public static AsyncFaultIsolator getAsyncFaultIsolatorIfExists(ServletRequest servletRequest) {
-        return (AsyncFaultIsolator) servletRequest.getAttribute(AsyncFaultIsolator.class.getName());
-    }
-
-    public static SyncAsyncFaultIsolator createSyncAsyncFaultIsolator(long timeout) {
-        return new SyncAsyncFaultIsolator(executor, timeout);
+    public static FaultIsolator getFaultIsolatorIfExists(ServletRequest servletRequest) {
+        return (FaultIsolator) servletRequest.getAttribute(FaultIsolator.class.getName());
     }
 }

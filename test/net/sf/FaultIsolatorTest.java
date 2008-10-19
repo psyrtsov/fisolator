@@ -23,14 +23,14 @@ import java.util.concurrent.*;
 import net.sf.fisolator.FeatureFaultIsolator;
 import net.sf.fisolator.FeatureFaultIsolatorImpl;
 import net.sf.fisolator.ServiceFaultException;
-import net.sf.fisolator.SyncAsyncFaultIsolator;
+import net.sf.fisolator.FaultIsolator;
 
 /**
  * User: Pavel Syrtsov
  * Date: Sep 1, 2008
  * Time: 7:21:11 PM
  */
-public class SyncAsyncFaultIsolatorTest extends TestCase {
+public class FaultIsolatorTest extends TestCase {
     private static final int LOCK_THRESHOLD = 4;
     private static final int UNLOCK_THRESHOLD = 2;
     private static final long TIMEOUT = 50L;
@@ -60,14 +60,17 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
     }
 
     public void testTimeout() throws Exception {
-        SyncAsyncFaultIsolator subject = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        FaultIsolator subject = new FaultIsolator(executor);
         try {
-            subject.invoke(new Callable<Object>() {
-                public Object call() throws Exception {
-                    Thread.sleep(TIMEOUT + 100);
-                    return null;
+            subject.invoke(new Runnable() {
+                public void run() {
+                    try {
+                        Thread.sleep(TIMEOUT + 100);
+                    } catch (InterruptedException e) {
+                        fail(e.getMessage());
+                    }
                 }
-            }, feature1, feature2);
+            }, TIMEOUT, feature1, feature2);
             fail("Expected timeout exception");
         } catch (ServiceFaultException e) {
             Throwable cause = e.getCause();
@@ -76,7 +79,7 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
     }
 
     public void testLockUnlock() throws Exception {
-        final SyncAsyncFaultIsolator subject = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        final FaultIsolator subject = new FaultIsolator(executor);
         // lock it
         final Semaphore[] semaphoreList = lock(subject, LOCK_THRESHOLD, feature1);
         // verify
@@ -93,14 +96,14 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
     }
 
     public void testSinglePointIsolation() throws Exception {
-        SyncAsyncFaultIsolator subject1 = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        FaultIsolator subject1 = new FaultIsolator(executor);
         // lock it
         final Semaphore[] semaphoreList = lock(subject1, LOCK_THRESHOLD+1, feature1, feature2);
         // verify that feature2 is locked
-        SyncAsyncFaultIsolator subject2 = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        FaultIsolator subject2 = new FaultIsolator(executor);
         checkLocked(subject2, feature2);
         // verify that not affected feature is not locked
-        SyncAsyncFaultIsolator subject3 = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        FaultIsolator subject3 = new FaultIsolator(executor);
         checkUnlocked(subject3, feature3);
 
         // unlock it
@@ -118,15 +121,15 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
      * @throws Exception when test failed
      */
     public void testMultiplePointIsolation() throws Exception {
-        SyncAsyncFaultIsolator subject1 = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        FaultIsolator subject1 = new FaultIsolator(executor);
         // lock it
         final Semaphore[] semaphoreList1 = lock(subject1, UNLOCK_THRESHOLD, feature1, feature2);
         // verify that feature2 is locked
-        SyncAsyncFaultIsolator subject2 = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        FaultIsolator subject2 = new FaultIsolator(executor);
         final Semaphore[] semaphoreList2 = lock(subject2, LOCK_THRESHOLD - UNLOCK_THRESHOLD, feature2, feature3);
 
         // verify that feature2 is locked
-        SyncAsyncFaultIsolator subject3 = new SyncAsyncFaultIsolator(executor, TIMEOUT);
+        FaultIsolator subject3 = new FaultIsolator(executor);
         checkLocked(subject3, feature2);
 
         // unlock it
@@ -140,13 +143,13 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
         checkUnlocked(subject3, feature2);
     }
 
-    private void checkLocked(SyncAsyncFaultIsolator subject, FeatureFaultIsolator... featureList) throws ExecutionException, InterruptedException {
+    private void checkLocked(FaultIsolator subject, FeatureFaultIsolator... featureList) throws ExecutionException, InterruptedException {
         try {
             subject.invoke(new Callable<Object>() {
                 public Object call() throws Exception {
                     return null;
                 }
-            }, featureList);
+            }, TIMEOUT, featureList);
             fail("Expected invocation to be rejected due to lockout");
         } catch (ServiceFaultException e) {
             Throwable cause = e.getCause();
@@ -154,7 +157,7 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
         }
     }
 
-    private Semaphore[] lock(SyncAsyncFaultIsolator subject, int lockCount, FeatureFaultIsolator... featurList) throws Exception {
+    private Semaphore[] lock(FaultIsolator subject, int lockCount, FeatureFaultIsolator... featurList) throws Exception {
         final Semaphore semaphoreList[] = new Semaphore[lockCount];
         // lock these features down
         for(int i=0; i< lockCount; i++) {
@@ -171,7 +174,7 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
         return semaphoreList;
     }
 
-    private void startWaiting(final SyncAsyncFaultIsolator subject, final Semaphore semaphore, final FeatureFaultIsolator... featureList) {
+    private void startWaiting(final FaultIsolator subject, final Semaphore semaphore, final FeatureFaultIsolator... featureList) {
         executor.submit(new Callable<Object>() {
             public Object call() throws Exception {
                 return subject.invoke(new Callable<Object>() {
@@ -179,18 +182,18 @@ public class SyncAsyncFaultIsolatorTest extends TestCase {
                         semaphore.acquire();
                         return null;
                     }
-                }, featureList);
+                }, TIMEOUT, featureList);
             }
         });
     }
 
-    private void checkUnlocked(SyncAsyncFaultIsolator subject, FeatureFaultIsolator... featureList) throws Exception {
+    private void checkUnlocked(FaultIsolator subject, FeatureFaultIsolator... featureList) throws Exception {
         final String dummyResult = "dummyResult";
         Object res = subject.invoke(new Callable<Object>() {
             public Object call() throws Exception {
                 return dummyResult;
             }
-        }, featureList);
+        }, TIMEOUT, featureList);
         assertSame(dummyResult, res);
     }
 }

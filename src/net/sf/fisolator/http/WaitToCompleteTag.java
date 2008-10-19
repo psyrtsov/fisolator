@@ -1,11 +1,10 @@
 package net.sf.fisolator.http;
 
-import net.sf.fisolator.AsyncFaultIsolator;
+import net.sf.fisolator.FaultIsolator;
 
 import javax.servlet.jsp.tagext.TagSupport;
 import javax.servlet.jsp.JspException;
 import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
 import java.util.logging.Logger;
 
 /**
@@ -31,7 +30,7 @@ public class WaitToCompleteTag extends TagSupport {
             throw new JspException(WaitToCompleteTag.class.getSimpleName() + ".totalWait attribute has wrong value");
         }
         ServletRequest request = pageContext.getRequest();
-        AsyncFaultIsolator asyncFaultIsolator = ServletFaultIsolator.getAsyncFaultIsolatorIfExists(request);
+        FaultIsolator asyncFaultIsolator = ServletFaultIsolator.getFaultIsolatorIfExists(request);
         if (asyncFaultIsolator != null) {
             try {
                 asyncFaultIsolator.waitToComplete(totalWait);
