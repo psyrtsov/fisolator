@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="IvyIDEA" name="IvyIDEA">
+      <configuration ivyFile="$MODULE_DIR$/ivy.xml" useProjectSettings="true" ivySettingsFile="" onlyResolveSelectedConfigs="true" />
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -20,7 +25,6 @@
         <jarDirectory url="file://$MODULE_DIR$/testlib" recursive="false" />
       </library>
     </orderEntry>
-    <orderEntryProperties />
   </component>
 </module>
 

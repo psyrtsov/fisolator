@@ -16,6 +16,8 @@
 
 package net.sf.fisolator;
 
+import java.util.concurrent.Callable;
+
 /**
  * todo: provide comments
  * User: Pavel Syrtsov
@@ -23,11 +25,11 @@ package net.sf.fisolator;
  * Time: 9:58:31 AM
  */
 public interface FeatureFaultIsolator {
-    void taskStarted();
-
-    void taskStopped();
-
-    void taskTimedOut();
-
     boolean isAvailable();
+
+    <T> void taskAccepted(Callable<T> callable);
+
+    <T> T taskExec(Callable<T> callable) throws Exception;
+
+    <T> void taskTimedOut(Callable<T> callable);
 }

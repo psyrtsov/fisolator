@@ -17,6 +17,7 @@
 package net.sf.fisolator;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Callable;
 
 /**
  * User: Pavel Syrtsov
@@ -35,26 +36,30 @@ public class FeatureFaultIsolatorImpl implements FeatureFaultIsolator {
         this.unlockThreshold = unlockThreshold;
     }
 
-    public void taskStarted() {
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public <T> void taskAccepted(Callable<T> callable) {
         threadCounter.getAndIncrement();
     }
 
-    public void taskStopped() {
-        int activeCount = threadCounter.getAndDecrement();
-        if (!available && ((activeCount - 1) <= unlockThreshold)) {
-            available = true;
+    public <T> T taskExec(Callable<T> callable) throws Exception {
+        try {
+            return callable.call();
+        } finally {
+            int activeCount = threadCounter.getAndDecrement();
+            if (!available && ((activeCount - 1) <= unlockThreshold)) {
+                available = true;
+            }
         }
     }
 
-    public void taskTimedOut() {
+    public <T> void taskTimedOut(Callable<T> callable) {
         int activeCount = threadCounter.get();
         if (available && (activeCount >= lockThreshold)) {
             available = false;
         }
-    }
-
-    public boolean isAvailable() {
-        return available;
     }
 
     public String toString() {

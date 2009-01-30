@@ -20,10 +20,7 @@ import junit.framework.TestCase;
 
 import java.util.concurrent.*;
 
-import net.sf.fisolator.FeatureFaultIsolator;
-import net.sf.fisolator.FeatureFaultIsolatorImpl;
-import net.sf.fisolator.ServiceFaultException;
-import net.sf.fisolator.FaultIsolator;
+import net.sf.fisolator.*;
 
 /**
  * User: Pavel Syrtsov
@@ -38,7 +35,6 @@ public class FaultIsolatorTest extends TestCase {
 
     private FeatureFaultIsolator feature1;
     private FeatureFaultIsolator feature2;
-    private FeatureFaultIsolator feature3;
 
     @Override
     protected void setUp() throws Exception {
@@ -46,7 +42,6 @@ public class FaultIsolatorTest extends TestCase {
         executor = Executors.newCachedThreadPool();
         feature1 = new FeatureFaultIsolatorImpl(LOCK_THRESHOLD, UNLOCK_THRESHOLD);
         feature2 = new FeatureFaultIsolatorImpl(LOCK_THRESHOLD, UNLOCK_THRESHOLD);
-        feature3 = new FeatureFaultIsolatorImpl(LOCK_THRESHOLD, UNLOCK_THRESHOLD);
     }
 
     @Override
@@ -56,13 +51,12 @@ public class FaultIsolatorTest extends TestCase {
         executor = null;
         feature1 = null;
         feature2 = null;
-        feature3 = null;
     }
 
     public void testTimeout() throws Exception {
         FaultIsolator subject = new FaultIsolator(executor);
         try {
-            subject.invoke(new Runnable() {
+            subject.invoke(new Call() {
                 public void run() {
                     try {
                         Thread.sleep(TIMEOUT + 100);
@@ -70,7 +64,7 @@ public class FaultIsolatorTest extends TestCase {
                         fail(e.getMessage());
                     }
                 }
-            }, TIMEOUT, feature1, feature2);
+            }, TIMEOUT, feature1);
             fail("Expected timeout exception");
         } catch (ServiceFaultException e) {
             Throwable cause = e.getCause();
@@ -80,8 +74,8 @@ public class FaultIsolatorTest extends TestCase {
 
     public void testLockUnlock() throws Exception {
         final FaultIsolator subject = new FaultIsolator(executor);
-        // lock it
-        final Semaphore[] semaphoreList = lock(subject, LOCK_THRESHOLD, feature1);
+        // startWaitingThreads it
+        final Semaphore[] semaphoreList = startWaitingThreads(subject, LOCK_THRESHOLD, feature1);
         // verify
         checkLocked(subject, feature1);
         // unlock it
@@ -89,7 +83,7 @@ public class FaultIsolatorTest extends TestCase {
         for(int i=0; i<threadNumberToBeReleased; i++) {
             semaphoreList[i].release();
         }
-        // we have to give some time for threads to finidh unlocking
+        // we have to give some time for threads to finish unlocking
         Thread.sleep(50);
         // verify
         checkUnlocked(subject, feature1);
@@ -97,14 +91,14 @@ public class FaultIsolatorTest extends TestCase {
 
     public void testSinglePointIsolation() throws Exception {
         FaultIsolator subject1 = new FaultIsolator(executor);
-        // lock it
-        final Semaphore[] semaphoreList = lock(subject1, LOCK_THRESHOLD+1, feature1, feature2);
+        // startWaitingThreads it
+        final Semaphore[] semaphoreList = startWaitingThreads(subject1, LOCK_THRESHOLD+1, feature1);
         // verify that feature2 is locked
         FaultIsolator subject2 = new FaultIsolator(executor);
-        checkLocked(subject2, feature2);
+        checkLocked(subject2, feature1);
         // verify that not affected feature is not locked
         FaultIsolator subject3 = new FaultIsolator(executor);
-        checkUnlocked(subject3, feature3);
+        checkUnlocked(subject3, feature2);
 
         // unlock it
         int threadNumberToBeReleased = semaphoreList.length - UNLOCK_THRESHOLD + 1;
@@ -116,65 +110,24 @@ public class FaultIsolatorTest extends TestCase {
         checkUnlocked(subject2, feature2);
     }
 
-    /**
-     * here we are testing that single feature going to be locked out when it has threads stuck from different entry points
-     * @throws Exception when test failed
-     */
-    public void testMultiplePointIsolation() throws Exception {
-        FaultIsolator subject1 = new FaultIsolator(executor);
-        // lock it
-        final Semaphore[] semaphoreList1 = lock(subject1, UNLOCK_THRESHOLD, feature1, feature2);
-        // verify that feature2 is locked
-        FaultIsolator subject2 = new FaultIsolator(executor);
-        final Semaphore[] semaphoreList2 = lock(subject2, LOCK_THRESHOLD - UNLOCK_THRESHOLD, feature2, feature3);
-
-        // verify that feature2 is locked
-        FaultIsolator subject3 = new FaultIsolator(executor);
-        checkLocked(subject3, feature2);
-
-        // unlock it
-        int threadNumberToBeReleased = semaphoreList2.length;
-        for(int i=0; i<threadNumberToBeReleased; i++) {
-            semaphoreList2[i].release();
-        }
-        semaphoreList1[0].release();
-        Thread.sleep(100L);
-        // verify unlocked
-        checkUnlocked(subject3, feature2);
-    }
-
-    private void checkLocked(FaultIsolator subject, FeatureFaultIsolator... featureList) throws ExecutionException, InterruptedException {
-        try {
-            subject.invoke(new Callable<Object>() {
-                public Object call() throws Exception {
-                    return null;
-                }
-            }, TIMEOUT, featureList);
-            fail("Expected invocation to be rejected due to lockout");
-        } catch (ServiceFaultException e) {
-            Throwable cause = e.getCause();
-            assertNull(cause);
-        }
-    }
-
-    private Semaphore[] lock(FaultIsolator subject, int lockCount, FeatureFaultIsolator... featurList) throws Exception {
-        final Semaphore semaphoreList[] = new Semaphore[lockCount];
-        // lock these features down
-        for(int i=0; i< lockCount; i++) {
+    private Semaphore[] startWaitingThreads(FaultIsolator subject, int waitThreadNum, FeatureFaultIsolator feature) throws Exception {
+        final Semaphore semaphoreList[] = new Semaphore[waitThreadNum];
+        // startWaitingThreads these features down
+        for(int i=0; i< waitThreadNum; i++) {
             final Semaphore semaphore = new Semaphore(0);
             semaphoreList[i] = semaphore;
-            startWaiting(subject, semaphore, featurList);
+            startWaitingThread(subject, semaphore, feature);
         }
         // lockout should kick-in only on 1st timeout
         // make sure it didn't kick-in yet
-        checkUnlocked(subject, featurList);
+        checkUnlocked(subject, feature);
 
         // we have to wait until 1st timeout will kick in to make lockout effective
         Thread.sleep(TIMEOUT + 50);
         return semaphoreList;
     }
 
-    private void startWaiting(final FaultIsolator subject, final Semaphore semaphore, final FeatureFaultIsolator... featureList) {
+    private void startWaitingThread(final FaultIsolator subject, final Semaphore semaphore, final FeatureFaultIsolator feature) {
         executor.submit(new Callable<Object>() {
             public Object call() throws Exception {
                 return subject.invoke(new Callable<Object>() {
@@ -182,18 +135,32 @@ public class FaultIsolatorTest extends TestCase {
                         semaphore.acquire();
                         return null;
                     }
-                }, TIMEOUT, featureList);
+                }, TIMEOUT, feature);
             }
         });
     }
 
-    private void checkUnlocked(FaultIsolator subject, FeatureFaultIsolator... featureList) throws Exception {
+    private void checkLocked(FaultIsolator subject, FeatureFaultIsolator feature) throws ExecutionException, InterruptedException {
+        try {
+            subject.invoke(new Callable<Object>() {
+                public Object call() throws Exception {
+                    return null;
+                }
+            }, TIMEOUT, feature);
+            fail("Expected invocation to be rejected due to lockout");
+        } catch (ServiceFaultException e) {
+            Throwable cause = e.getCause();
+            assertNull(cause);
+        }
+    }
+
+    private void checkUnlocked(FaultIsolator subject, FeatureFaultIsolator feature) throws Exception {
         final String dummyResult = "dummyResult";
         Object res = subject.invoke(new Callable<Object>() {
             public Object call() throws Exception {
                 return dummyResult;
             }
-        }, TIMEOUT, featureList);
+        }, TIMEOUT, feature);
         assertSame(dummyResult, res);
     }
 }

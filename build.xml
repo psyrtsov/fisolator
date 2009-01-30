@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Fault Isolator Framework" default="dist" basedir=".">
-    <property name="version" value="0.4"/>
-    <property name="name" value="fisolator${version}"/>
+<project name="Fault Isolator" default="dist" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+    <import file="ivyutil.xml"/>
     <property name="lib.dir" value="lib"/>
-    <property name="src.dir" value="src"/>
     <property name="src.tests" value="test"/>
     <property name="src.docs" value="docs"/>
     <property name="build.dir" value="build"/>
-    <property name="build.classes" value="build/classes"/>
-    <property name="build.lib" value="build/lib"/>
+    <property name="build.classes.dir" value="build/classes"/>
+    <property name="build.jar.dir" value="build/lib"/>
     <property name="build.docs" value="build/docs"/>
     <property name="build.javadoc" value="build/docs/javadoc"/>
     <property name="dist.dir" value="dist"/>
@@ -16,17 +14,19 @@
     <property name="dist.javadoc" value="docs/javadoc"/>
     <property name="testlib.dir" value="testlib"/>
     <property name="reports.tests" value="build"/>
+    <path id="src.path">
+        <path path="src"/>
+    </path>
     <path id="runtime-libs">
         <fileset dir="${lib.dir}">
             <include name="*.jar"/>
         </fileset>
-    </path>
-    <path id="compile-libs">
-        <fileset dir="${testlib.dir}">
-            <include name="servlet-api.jar"/>
-            <include name="jsp-api.jar"/>   
+        <fileset dir="${ivylib.dir}">
+            <include name="*.jar"/>
         </fileset>
-        <path refid="runtime-libs"/>
+        <!--these two jars are needed only for compile time, they suppose to be proveded by servlet continer at runtime-->
+        <pathelement path="${testlib.dir}/servlet-api.jar"/>
+        <pathelement path="${testlib.dir}/jsp-api.jar"/>
     </path>
     <path id="test-libs">
         <fileset dir="${testlib.dir}">
@@ -34,33 +34,46 @@
         </fileset>
         <path refid="runtime-libs"/>
     </path>
-    <target name="dist" depends="jars, docs">
+
+    <!-- targets overriden from ivyttool.xml -->
+    <target name="prep-publish" depends="jars,src-zip" description="--> used by publish targets from ivyutil.xml"/>
+    <target name="clean" depends="clean-ivylib">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <target name="dist" depends="clean,jars,docs">
         <mkdir dir="${dist.dir}"/>
-        <zip destfile="${dist.dir}/${name}-bin.zip">
-            <zipfileset dir="${lib.dir}" prefix="${name}/lib"/>
-            <zipfileset dir="${build.lib}" prefix="${name}/lib"/>
-            <zipfileset dir="${build.docs}" prefix="${name}/docs"/>
-            <zipfileset dir="${src.tests}" prefix="${name}/test"/>
+        <zip destfile="${dist.dir}/${ivy.module}.${ivy.revision}-bin.zip">
+            <zipfileset dir="${lib.dir}" prefix="${ivy.module}.${ivy.revision}/lib"/>
+            <zipfileset dir="${build.jar.dir}" prefix="${ivy.module}.${ivy.revision}/lib"/>
+            <zipfileset dir="${build.docs}" prefix="${ivy.module}.${ivy.revision}/docs"/>
+            <zipfileset dir="${src.tests}" prefix="${ivy.module}.${ivy.revision}/test"/>
         </zip>
-        <zip destfile="${dist.dir}/${name}-src.zip">
-            <zipfileset dir="." prefix="${name}" excludes="${build.dir}/**,${dist.dir}/**"/>
+        <zip destfile="${dist.dir}/${ivy.module}.${ivy.revision}-src.zip">
+            <zipfileset dir="." prefix="${ivy.module}.${ivy.revision}" excludes="build/**,dist/**"/>
+        </zip>
+    </target>
+    <target name="src-zip" depends="ivy-setup">
+        <zip destfile="${build.jar.dir}/${ivy.module}.${ivy.revision}-src.zip">
+            <zipfileset dir="src"/>
         </zip>
     </target>
     <target name="jars"
             depends="compile">
-        <jar destfile="${build.lib}/${name}.jar"
-             basedir="${build.classes}">
+        <property name="ivy.new.revision" value="${ivy.revision}"/>
+        <jar destfile="${build.jar.dir}/${ivy.module}.${ivy.revision}.jar"
+             basedir="${build.classes.dir}">
             <manifest>
-                <attribute name="Jar-Version" value="${version}"/>
+                <attribute name="Jar-Version" value="${ivy.new.revision}"/>
             </manifest>
-            <metainf dir="./etc" includes="tld/**"/>
         </jar>
     </target>
     <target name="test" depends="compile,compile-test">
         <junit haltonfailure="yes">
             <classpath>
                 <path refid="test-libs"/>
-                <dirset dir="${build.classes}"/>
+                <dirset dir="${build.classes.dir}"/>
             </classpath>
             <formatter type="plain"/>
             <batchtest fork="yes" todir="${reports.tests}">
@@ -89,26 +102,22 @@
                 </replacetokens>
             </filterchain>
         </copy>
-        <javadoc sourcepath="src" destdir="${build.javadoc}" classpathref="compile-libs"/>
+        <javadoc sourcepath="src" destdir="${build.javadoc}"/>
     </target>
-    <target name="clean">
-        <delete dir="${build.dir}"/>
-        <delete dir="${dist.dir}"/>
-    </target>
-    <target name="compile" depends="clean">
+    <target name="compile" depends="ivy-resolve">
         <mkdir dir="${build.dir}"/>
-        <mkdir dir="${build.classes}"/>
-        <mkdir dir="${build.lib}"/>
-        <javac srcdir="${src.dir}"
-               destdir="${build.classes}"
+        <mkdir dir="${build.classes.dir}"/>
+        <mkdir dir="${build.jar.dir}"/>
+        <javac destdir="${build.classes.dir}"
                debug="true"
                deprecation="true">
-            <classpath refid="compile-libs"/>
+            <src refid="src.path"/>
+            <classpath refid="runtime-libs"/>
         </javac>
     </target>
     <target name="compile-test">
         <javac srcdir="${src.tests}"
-               destdir="${build.classes}"
+               destdir="${build.classes.dir}"
                debug="true"
                deprecation="true">
             <classpath refid="test-libs"/>
