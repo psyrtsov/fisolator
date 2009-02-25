@@ -17,8 +17,6 @@
 package net.sf.fisolator;
 
 import java.util.concurrent.*;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * This is the main class for fault isolation framework, it allows differnet types of calls to callable that to be isolated: <br/>
@@ -30,7 +28,7 @@ import java.util.ArrayList;
  */
 public class FaultIsolator {
     private long startTime = System.currentTimeMillis();
-    private List<TaskData> taskDataList = new ArrayList<TaskData>();
+    private BlockingQueue<TaskData> taskDataList = new LinkedBlockingQueue<TaskData>();
     private ExecutorService executor;
 
     public FaultIsolator(ExecutorService executor) {
@@ -41,7 +39,7 @@ public class FaultIsolator {
         return startTime;
     }
 
-    public List<TaskData> getTaskDataList() {
+    public BlockingQueue<TaskData> getTaskDataList() {
         return taskDataList;
     }
 
@@ -70,15 +68,6 @@ public class FaultIsolator {
         TaskData taskData = new TaskData(callable, future, feature);
         taskDataList.add(taskData);
         return taskData.future;
-    }
-
-    public Future enqueue(final Runnable runnable, final FeatureFaultIsolator feature) {
-        return enqueue(new Callable<Object>() {
-            public Object call() throws Exception {
-                runnable.run();
-                    return null;
-            }
-        }, feature);
     }
 
     public <T> T invoke(final Callable<T> callable, long timeout, final FeatureFaultIsolator feature) throws ExecutionException, InterruptedException, ServiceFaultException {
@@ -120,7 +109,7 @@ public class FaultIsolator {
             }
             long timeLeft = totalExecutionTime - (System.currentTimeMillis() - startTime);
             if (timeLeft <= 0L) {
-                throw new TimeoutException();
+                timeLeft = 0L;
             }
             try {
                 taskData.future.get(timeLeft, TimeUnit.MILLISECONDS);
