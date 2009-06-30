@@ -16,8 +16,8 @@
 
 package net.sf.fisolator;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * User: Pavel Syrtsov
@@ -32,6 +32,9 @@ public class FeatureFaultIsolatorImpl implements FeatureFaultIsolator {
     private int unlockThreshold;
 
     public FeatureFaultIsolatorImpl(int lockThreshold, int unlockThreshold) {
+        if (lockThreshold < unlockThreshold) {
+            throw new RuntimeException("lockThreshold(" + lockThreshold + ") has to be higher then unlockThreshold(" + unlockThreshold + ")");
+        }
         this.lockThreshold = lockThreshold;
         this.unlockThreshold = unlockThreshold;
     }
