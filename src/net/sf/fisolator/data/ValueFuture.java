@@ -1,6 +1,9 @@
 package net.sf.fisolator.data;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * User: Pavel Syrtsov
@@ -8,10 +11,10 @@ import java.util.concurrent.*;
  * Time: 4:51:22 PM
  * todo: provide comments
  */
-public class PendingValue<T> extends Semaphore implements Future<T> {
+public class ValueFuture<T> extends Semaphore implements Future<T> {
     volatile T value;
 
-    public PendingValue() {
+    public ValueFuture() {
         super(0);
     }
 
@@ -27,14 +30,16 @@ public class PendingValue<T> extends Semaphore implements Future<T> {
         return super.availablePermits() > 0;
     }
 
-    public T get() throws InterruptedException, ExecutionException {
+    public T get() throws InterruptedException {
         super.acquire();
         super.release();
         return value;
     }
 
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        super.acquire();
+    public T get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+        if (!super.tryAcquire(timeout, unit)) {
+            throw new TimeoutException();
+        }
         super.release();
         return value;
     }

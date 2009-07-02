@@ -1,8 +1,8 @@
 package net.sf.fisolator.data;
 
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.io.Serializable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * User: Pavel Syrtsov
@@ -15,25 +15,25 @@ import java.io.Serializable;
  */
 public class PendingValueMap implements Serializable {
     public static final long serialVersionUID = 1L;
-    private transient ConcurrentMap<String, PendingValue> pendingValueMap;
+    private transient ConcurrentMap<String, ValueFuture> pendingValueMap;
 
     public PendingValueMap() {
-        pendingValueMap = new ConcurrentHashMap<String, PendingValue>();
+        pendingValueMap = new ConcurrentHashMap<String, ValueFuture>();
     }
 
-    public <T> PendingValue<T> definePendingValue(String name) {
-        PendingValue<T> newValue = new PendingValue<T>();
+    public <T> ValueFuture<T> definePendingValue(String name) {
+        ValueFuture<T> newValueFuture = new ValueFuture<T>();
         //noinspection unchecked
-        PendingValue<T> oldValue = pendingValueMap.putIfAbsent(name, newValue);
-        return (oldValue == null)? newValue: oldValue;
+        ValueFuture<T> oldValueFuture = pendingValueMap.putIfAbsent(name, newValueFuture);
+        return (oldValueFuture == null) ? newValueFuture : oldValueFuture;
     }
 
-    public <T> PendingValue<T> get(String name) {
+    public <T> ValueFuture<T> get(String name) {
         //noinspection unchecked
         return pendingValueMap.get(name);
     }
 
-    public <T> PendingValue<T> remove(String name) {
+    public <T> ValueFuture<T> remove(String name) {
         //noinspection unchecked
         return pendingValueMap.remove(name);
     }
