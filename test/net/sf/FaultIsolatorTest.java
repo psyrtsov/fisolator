@@ -33,15 +33,15 @@ public class FaultIsolatorTest extends TestCase {
     private static final long TIMEOUT = 50L;
     private ExecutorService executor;
 
-    private FeatureFaultIsolator feature1;
-    private FeatureFaultIsolator feature2;
+    private ServiceTracker feature1;
+    private ServiceTracker feature2;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         executor = Executors.newCachedThreadPool();
-        feature1 = new FeatureFaultIsolatorImpl(LOCK_THRESHOLD, UNLOCK_THRESHOLD);
-        feature2 = new FeatureFaultIsolatorImpl(LOCK_THRESHOLD, UNLOCK_THRESHOLD);
+        feature1 = new ServiceTrackerImpl(LOCK_THRESHOLD, UNLOCK_THRESHOLD);
+        feature2 = new ServiceTrackerImpl(LOCK_THRESHOLD, UNLOCK_THRESHOLD);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class FaultIsolatorTest extends TestCase {
         checkUnlocked(subject2, feature2);
     }
 
-    private Semaphore[] startWaitingThreads(FaultIsolator subject, int waitThreadNum, FeatureFaultIsolator feature) throws Exception {
+    private Semaphore[] startWaitingThreads(FaultIsolator subject, int waitThreadNum, ServiceTracker feature) throws Exception {
         final Semaphore semaphoreList[] = new Semaphore[waitThreadNum];
         // startWaitingThreads these features down
         for(int i=0; i< waitThreadNum; i++) {
@@ -127,7 +127,7 @@ public class FaultIsolatorTest extends TestCase {
         return semaphoreList;
     }
 
-    private void startWaitingThread(final FaultIsolator subject, final Semaphore semaphore, final FeatureFaultIsolator feature) {
+    private void startWaitingThread(final FaultIsolator subject, final Semaphore semaphore, final ServiceTracker feature) {
         executor.submit(new Callable<Object>() {
             public Object call() throws Exception {
                 return subject.invoke(new Callable<Object>() {
@@ -140,7 +140,7 @@ public class FaultIsolatorTest extends TestCase {
         });
     }
 
-    private void checkLocked(FaultIsolator subject, FeatureFaultIsolator feature) throws ExecutionException, InterruptedException {
+    private void checkLocked(FaultIsolator subject, ServiceTracker feature) throws ExecutionException, InterruptedException {
         try {
             subject.invoke(new Callable<Object>() {
                 public Object call() throws Exception {
@@ -154,7 +154,7 @@ public class FaultIsolatorTest extends TestCase {
         }
     }
 
-    private void checkUnlocked(FaultIsolator subject, FeatureFaultIsolator feature) throws Exception {
+    private void checkUnlocked(FaultIsolator subject, ServiceTracker feature) throws Exception {
         final String dummyResult = "dummyResult";
         Object res = subject.invoke(new Callable<Object>() {
             public Object call() throws Exception {

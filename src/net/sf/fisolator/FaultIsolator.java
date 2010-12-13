@@ -55,7 +55,7 @@ public class FaultIsolator {
         this.executor = executor;
     }
 
-    public<T> Future enqueue(final Callable<T> callable, final FeatureFaultIsolator feature) {
+    public<T> Future enqueue(final Callable<T> callable, final ServiceTracker feature) {
         if(!feature.isAvailable()) {
             return null;
         }
@@ -70,7 +70,7 @@ public class FaultIsolator {
         return taskData.future;
     }
 
-    public <T> T invoke(final Callable<T> callable, long timeout, final FeatureFaultIsolator feature) throws ExecutionException, InterruptedException, ServiceFaultException {
+    public <T> T invoke(final Callable<T> callable, long timeout, final ServiceTracker feature) throws ExecutionException, InterruptedException, ServiceFaultException {
         if (!feature.isAvailable()) {
             throw new ServiceFaultException("Feature " + feature + " is disabled");
         }
@@ -88,7 +88,7 @@ public class FaultIsolator {
         }
     }
 
-    public static <T> T invoke(final Callable<T> callable, FeatureFaultIsolator feature) throws Exception {
+    public static <T> T invoke(final Callable<T> callable, ServiceTracker feature) throws Exception {
         if (!feature.isAvailable()) {
             throw new ServiceFaultException("Feature " + feature + " is disabled");
         }
@@ -135,9 +135,9 @@ public class FaultIsolator {
     public static class TaskData {
         private final Callable<?> callable;
         private final Future<?> future;
-        private final FeatureFaultIsolator feature;
+        private final ServiceTracker feature;
 
-        public TaskData(Callable<?> callable, Future<?> future, FeatureFaultIsolator feature) {
+        public TaskData(Callable<?> callable, Future<?> future, ServiceTracker feature) {
             this.callable = callable;
             this.future = future;
             this.feature = feature;
@@ -147,7 +147,7 @@ public class FaultIsolator {
             return future;
         }
 
-        public FeatureFaultIsolator getFeature() {
+        public ServiceTracker getFeature() {
             return feature;
         }
 

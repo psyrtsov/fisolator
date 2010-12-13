@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2008 Pavel Syrtsov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~    http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and limitations
+  ~  under the License.
+  -->
+
 <project name="Fault Isolator" default="dist" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
     <import file="ivyutil.xml"/>
     <property name="lib.dir" value="lib"/>
@@ -42,6 +58,12 @@
         <delete dir="${dist.dir}"/>
     </target>
 
+    <target name="git">
+        <exec executable="git" outputproperty="commitSha1">
+            <arg line="log -1 --pretty=format:%H"/>
+        </exec>
+    </target>
+
     <target name="dist" depends="clean,jars,docs">
         <mkdir dir="${dist.dir}"/>
         <zip destfile="${dist.dir}/${ivy.module}.${ivy.revision}-bin.zip">
@@ -60,12 +82,13 @@
         </zip>
     </target>
     <target name="jars"
-            depends="compile">
+            depends="compile,git">
         <property name="ivy.new.revision" value="${ivy.revision}"/>
         <jar destfile="${build.jar.dir}/${ivy.module}.${ivy.revision}.jar"
              basedir="${build.classes.dir}">
             <manifest>
                 <attribute name="Jar-Version" value="${ivy.new.revision}"/>
+                <attribute name="Commit-Sha1" value="${commitSha1}"/>
             </manifest>
         </jar>
     </target>
