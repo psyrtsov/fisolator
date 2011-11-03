@@ -1,5 +1,5 @@
 <ivy-module version="1.0">
-    <info organisation="net.sf" module="fisolator" revision="0.7"/>
+    <info organisation="net.sf" module="fisolator" revision="0.8"/>
     <publications>
         <artifact name="${ivy.module}.${ivy.revision}" ext="jar"/>
         <artifact name="${ivy.module}.${ivy.revision}-src" type="source" ext="zip"/>
