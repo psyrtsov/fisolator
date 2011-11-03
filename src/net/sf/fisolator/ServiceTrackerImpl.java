@@ -68,4 +68,9 @@ public class ServiceTrackerImpl implements ServiceTracker {
     public String toString() {
         return ServiceTrackerImpl.class.getSimpleName() + ": threadCounter=" + threadCounter + ", available=" + available;
     }
+
+    @SuppressWarnings({"UnusedDeclaration"})
+    public int getThreadCounter() {
+        return threadCounter.get();
+    }
 }
